@@ -2,7 +2,7 @@ import threading
 import time
 
 from mouse import click
-
+from state import ClickerState
 
 class AutoClicker:
 
@@ -17,6 +17,7 @@ class AutoClicker:
 
         self.running = False
         self.thread = None
+        self.state = ClickerState.IDLE
 
     def start(self):
 
@@ -24,6 +25,7 @@ class AutoClicker:
             return
 
         self.running = True
+        self.state = ClickerState.RUNNING
 
         self.thread = threading.Thread(target=self._run)
 
@@ -32,6 +34,7 @@ class AutoClicker:
     def stop(self):
 
         self.running = False
+        self.state = ClickerState.STOPPED
 
 
     def _run(self):
@@ -49,12 +52,24 @@ class AutoClicker:
             else:
                 print(f"Clique {self.clicks}")
 
-            if self.amount > 0 and self.clicks >= self.amount:
+
+            if (
+                self.amount > 0
+                and self.clicks >= self.amount
+            ):
                 break
 
-            time.sleep(self.interval)
+
+            time.sleep(
+                self.interval
+            )
+
 
         self.running = False
+
+        if self.state != ClickerState.STOPPED:
+            self.state = ClickerState.FINISHED
+
 
         if self.callback:
             self.callback("finished")

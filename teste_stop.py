@@ -1,30 +1,28 @@
+import time
+
 from clicker import AutoClicker
 
 
 def status(valor):
-
     print("Evento:", valor)
 
 
-print("Iniciando AutoClicker")
-
-
 bot = AutoClicker(
-    interval=1,
-    amount=5,
+    interval=0.5,
     callback=status
 )
 
 
 print("Estado inicial:", bot.state)
 
-
 bot.start()
+
+time.sleep(3)
+
+print("Parando...")
+
+bot.stop()
 
 bot.thread.join()
 
-
-print("Estado final:", bot.state)
-
-
-print("Finalizado")
+print("Estado depois do stop:", bot.state)
