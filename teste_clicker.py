@@ -1,5 +1,7 @@
 from clicker import AutoClicker
+from config import load_config
 
+config = load_config()
 
 def status(valor):
 
@@ -10,8 +12,9 @@ print("Iniciando AutoClicker")
 
 
 bot = AutoClicker(
-    interval=1,
-    amount=5,
+    interval=config["interval"],
+    button=config["button"],
+    amount=config["amount"],
     callback=status
 )
 
