@@ -1,12 +1,4 @@
-asarPy==1.0.1
-black==26.5.1
-click==8.4.2
 evdev==1.9.3
-mypy_extensions==1.1.0
-packaging==26.2
-pathspec==1.1.1
-platformdirs==4.11.0
 pynput==1.8.2
 python-xlib==0.33
-pytokens==0.4.1
 six==1.17.0

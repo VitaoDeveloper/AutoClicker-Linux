@@ -9,5 +9,5 @@ venv/
 # VS Code
 .vscode/
 
-# Swap files
+# Temporary files
 *.swp
