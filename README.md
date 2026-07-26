@@ -10,7 +10,7 @@ Projeto desenvolvido em Python com foco em compatibilidade com diferentes ambien
 
 🚧 Em desenvolvimento
 
-Versão atual: **v0.5.0**
+Versão atual: **v0.6.0**
 
 ---
 
@@ -26,6 +26,7 @@ Versão atual: **v0.5.0**
 ✅ Execução em thread separada  
 ✅ Interface gráfica em GTK4  
 ✅ Tratamento de erros (mouse indisponível, ydotool ausente, config corrompida)  
+✅ Atalho global de teclado para iniciar/parar (F1-F12, Pause, Scroll Lock)  
 
 ---
 
@@ -221,12 +222,28 @@ python3 -m tests.test_mouse
 
 ## Melhorias futuras
 
-- Atalhos globais de teclado
 - Perfis de configuração
 - Ícone na bandeja do sistema
 - Pacote `.deb`
 - AppImage
 - Testes automatizados com pytest
+
+---
+
+# Atalho global de teclado
+
+O atalho funciona mesmo com a janela sem foco:
+
+- **X11** → via `pynput`
+- **Wayland** → lê os dispositivos em `/dev/input` via `evdev` (o Wayland não permite escuta global de teclado por questões de segurança, então essa é a forma de contornar)
+
+No Wayland, seu usuário precisa ter permissão de leitura em `/dev/input`:
+
+```bash
+sudo usermod -aG input $USER
+```
+
+Depois faça logout/login para a permissão valer.
 
 ---
 

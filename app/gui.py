@@ -6,11 +6,15 @@ from gi.repository import Gtk, GLib, Gdk
 
 from .clicker import AutoClicker
 from .config import load_config, save_config
+from .hotkeys import GlobalHotkey, HotkeyError, KEY_MAP
 from .state import ClickerState
 
 
 BUTTON_LABELS = ["Esquerdo", "Meio", "Direito"]
 BUTTON_VALUES = [1, 2, 3]
+
+HOTKEY_NAMES = list(KEY_MAP.keys())
+HOTKEY_LABELS = [name.upper().replace("_", " ") for name in HOTKEY_NAMES]
 
 STATUS_TEXT = {
     ClickerState.IDLE: "Pronto",
@@ -30,7 +34,10 @@ class AutoClickerWindow(Gtk.ApplicationWindow):
         self.set_resizable(False)
 
         self.bot = None
+        self.hotkey = None
         self.config = load_config()
+
+        self.connect("close-request", self._on_close_request)
 
         root = Gtk.Box(
             orientation=Gtk.Orientation.VERTICAL,
@@ -60,6 +67,12 @@ class AutoClickerWindow(Gtk.ApplicationWindow):
             self._build_amount_spin(),
         ))
 
+        # Atalho global
+        root.append(self._build_row(
+            "Atalho global iniciar/parar:",
+            self._build_hotkey_dropdown(),
+        ))
+
         # Separador
         root.append(Gtk.Separator())
 
@@ -85,6 +98,8 @@ class AutoClickerWindow(Gtk.ApplicationWindow):
         self.toggle_button = Gtk.Button(label="Iniciar")
         self.toggle_button.connect("clicked", self._on_toggle_clicked)
         root.append(self.toggle_button)
+
+        self._start_hotkey_listener()
 
     # ---------- construção dos campos ----------
 
@@ -139,6 +154,20 @@ class AutoClickerWindow(Gtk.ApplicationWindow):
         self.amount_spin = spin
         return spin
 
+    def _build_hotkey_dropdown(self):
+        model = Gtk.StringList.new(HOTKEY_LABELS)
+        dropdown = Gtk.DropDown(model=model)
+
+        try:
+            index = HOTKEY_NAMES.index(self.config.get("hotkey", "f6"))
+        except ValueError:
+            index = HOTKEY_NAMES.index("f6")
+
+        dropdown.set_selected(index)
+        dropdown.connect("notify::selected", self._on_hotkey_changed)
+        self.hotkey_dropdown = dropdown
+        return dropdown
+
     # ---------- handlers de configuração ----------
 
     def _on_interval_changed(self, spin):
@@ -153,6 +182,12 @@ class AutoClickerWindow(Gtk.ApplicationWindow):
     def _on_amount_changed(self, spin):
         self.config["amount"] = int(spin.get_value())
         save_config(self.config)
+
+    def _on_hotkey_changed(self, dropdown, _param):
+        index = dropdown.get_selected()
+        self.config["hotkey"] = HOTKEY_NAMES[index]
+        save_config(self.config)
+        self._start_hotkey_listener()
 
     # ---------- iniciar / parar ----------
 
@@ -204,6 +239,38 @@ class AutoClickerWindow(Gtk.ApplicationWindow):
         self.interval_spin.set_sensitive(sensitive)
         self.button_dropdown.set_sensitive(sensitive)
         self.amount_spin.set_sensitive(sensitive)
+
+    # ---------- atalho global ----------
+
+    def _start_hotkey_listener(self):
+        if self.hotkey:
+            self.hotkey.stop()
+            self.hotkey = None
+
+        key = self.config.get("hotkey", "f6")
+
+        self.hotkey = GlobalHotkey(key=key, on_trigger=self._on_hotkey_triggered)
+
+        try:
+            self.hotkey.start()
+        except HotkeyError as error:
+            self.hotkey = None
+            self.error_label.set_text(f"Atalho global indisponível: {error}")
+            self.error_label.set_visible(True)
+
+    def _on_hotkey_triggered(self):
+        # Executa numa thread de fundo (pynput/evdev): repassa pro GTK
+        GLib.idle_add(self._on_toggle_clicked, None)
+
+    def _on_close_request(self, _window):
+        if self.hotkey:
+            self.hotkey.stop()
+            self.hotkey = None
+
+        if self.bot and self.bot.running:
+            self.bot.stop()
+
+        return False  # permite o fechamento normal da janela
 
 
 CSS = """

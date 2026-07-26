@@ -12,7 +12,8 @@ CONFIG_FILE = BASE_DIR / "config.json"
 DEFAULT_CONFIG = {
     "interval": 0.1,
     "button": 1,
-    "amount": 0
+    "amount": 0,
+    "hotkey": "f6"
 }
 
 
