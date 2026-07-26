@@ -10,3 +10,6 @@ venv/
 
 # Arquivos temporários
 *.log
+
+# Editor temporário
+*.swp
