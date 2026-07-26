@@ -1,4 +1,4 @@
-from mouse import click
+from app.mouse import click
 
 import time
 

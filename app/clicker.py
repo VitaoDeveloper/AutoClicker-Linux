@@ -1,8 +1,8 @@
 import threading
 import time
 
-from mouse import click
-from state import ClickerState
+from .mouse import click
+from .state import ClickerState
 
 class AutoClicker:
 

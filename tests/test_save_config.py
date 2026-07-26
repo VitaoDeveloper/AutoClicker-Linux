@@ -1,4 +1,4 @@
-from config import load_config, save_config
+from app.config import load_config, save_config
 
 
 config = load_config()

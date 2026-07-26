@@ -1,6 +1,6 @@
 import time
 
-from clicker import AutoClicker
+from app.clicker import AutoClicker
 
 
 def status(valor):

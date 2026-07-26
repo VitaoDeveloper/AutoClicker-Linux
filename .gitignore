@@ -1,15 +1,13 @@
 # Python
 __pycache__/
 *.pyc
+*.pyo
 
-# Ambiente virtual
+# Virtual environment
 venv/
 
-# Editor
+# VS Code
 .vscode/
 
-# Arquivos temporários
-*.log
-
-# Editor temporário
+# Swap files
 *.swp

@@ -1,5 +1,5 @@
-from clicker import AutoClicker
-from config import load_config
+from app.clicker import AutoClicker
+from app.config import load_config
 
 config = load_config()
 
