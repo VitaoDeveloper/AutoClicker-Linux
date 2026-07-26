@@ -10,7 +10,7 @@ Projeto desenvolvido em Python com foco em compatibilidade com diferentes ambien
 
 🚧 Em desenvolvimento
 
-Versão atual: **v0.4.1**
+Versão atual: **v0.5.0**
 
 ---
 
@@ -24,6 +24,8 @@ Versão atual: **v0.4.1**
 ✅ Controle de estados do programa  
 ✅ Configuração salva em JSON  
 ✅ Execução em thread separada  
+✅ Interface gráfica em GTK4  
+✅ Tratamento de erros (mouse indisponível, ydotool ausente, config corrompida)  
 
 ---
 
@@ -133,7 +135,7 @@ AutoClicker-Linux
 - pynput
 - ydotool
 - python-xlib
-- GTK4 (planejado)
+- GTK4 (PyGObject)
 
 ---
 
@@ -173,10 +175,24 @@ Ative:
 source venv/bin/activate
 ```
 
-Instale as dependências:
+Instale as dependências Python:
 
 ```bash
 pip install -r requirements.txt
+```
+
+Instale os bindings do GTK4 (pacote do sistema, não vai pelo pip) no Pop!_OS/Ubuntu:
+
+```bash
+sudo apt install python3-gi gir1.2-gtk-4.0
+```
+
+---
+
+# Executando a interface gráfica
+
+```bash
+python3 -m app.main
 ```
 
 ---
@@ -202,13 +218,6 @@ python3 -m tests.test_mouse
 ---
 
 # Próximos passos
-
-## Interface gráfica
-
-- Interface GTK4
-- Botões iniciar/parar
-- Configuração de intervalo
-- Seleção do botão do mouse
 
 ## Melhorias futuras
 

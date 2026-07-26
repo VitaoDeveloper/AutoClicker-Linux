@@ -6,3 +6,4 @@ class ClickerState(Enum):
     RUNNING = "running"
     STOPPED = "stopped"
     FINISHED = "finished"
+    ERROR = "error"

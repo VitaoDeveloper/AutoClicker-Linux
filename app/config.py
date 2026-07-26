@@ -20,11 +20,25 @@ def load_config():
 
     if not os.path.exists(CONFIG_FILE):
         save_config(DEFAULT_CONFIG)
-        return DEFAULT_CONFIG
+        return dict(DEFAULT_CONFIG)
 
+    try:
+        with open(CONFIG_FILE, "r") as file:
+            config = json.load(file)
+    except (json.JSONDecodeError, OSError):
+        # Arquivo corrompido ou ilegível: restaura o padrão
+        save_config(DEFAULT_CONFIG)
+        return dict(DEFAULT_CONFIG)
 
-    with open(CONFIG_FILE, "r") as file:
-        return json.load(file)
+    if not isinstance(config, dict):
+        save_config(DEFAULT_CONFIG)
+        return dict(DEFAULT_CONFIG)
+
+    # Garante que chaves ausentes (config antigo/incompleto) usem o padrão
+    merged = dict(DEFAULT_CONFIG)
+    merged.update(config)
+
+    return merged
 
 
 

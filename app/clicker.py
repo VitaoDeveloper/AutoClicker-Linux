@@ -1,7 +1,7 @@
 import threading
 import time
 
-from .mouse import click
+from .mouse import click, MouseError
 from .state import ClickerState
 
 class AutoClicker:
@@ -14,6 +14,7 @@ class AutoClicker:
         self.callback = callback
 
         self.clicks = 0
+        self.error = None
 
         self.running = False
         self.thread = None
@@ -25,6 +26,7 @@ class AutoClicker:
             return
 
         self.running = True
+        self.error = None
         self.state = ClickerState.RUNNING
 
         self.thread = threading.Thread(target=self._run)
@@ -43,7 +45,19 @@ class AutoClicker:
 
         while self.running:
 
-            click(self.button)
+            try:
+                click(self.button)
+            except MouseError as error:
+                self.error = str(error)
+                self.running = False
+                self.state = ClickerState.ERROR
+
+                if self.callback:
+                    self.callback(f"error: {self.error}")
+                else:
+                    print(f"Erro: {self.error}")
+
+                break
 
             self.clicks += 1
 
@@ -67,9 +81,9 @@ class AutoClicker:
 
         self.running = False
 
-        if self.state != ClickerState.STOPPED:
+        if self.state == ClickerState.RUNNING:
             self.state = ClickerState.FINISHED
 
 
-        if self.callback:
+        if self.callback and self.state != ClickerState.ERROR:
             self.callback("finished")
