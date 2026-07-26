@@ -2,7 +2,7 @@
 
 Auto Clicker para Linux com suporte a X11 e Wayland.
 
-O objetivo do projeto é criar um Auto Clicker nativo para Linux com interface gráfica, compatível com ambientes modernos como GNOME X11 e Wayland (COSMIC).
+Projeto desenvolvido em Python com foco em compatibilidade com diferentes ambientes gráficos Linux.
 
 ---
 
@@ -10,117 +10,130 @@ O objetivo do projeto é criar um Auto Clicker nativo para Linux com interface g
 
 🚧 Em desenvolvimento
 
-Versão atual: **v0.3**
+Versão atual: **v0.4.1**
 
 ---
 
-# Recursos atuais
+## Recursos atuais
 
-✅ Controle de mouse no X11 usando `pynput`
-✅ Controle de mouse no Wayland usando `ydotool`
-✅ Detecção automática da sessão gráfica
-✅ Motor de cliques utilizando threads
-✅ Controle de quantidade de cliques
-✅ Controle de intervalo entre cliques
-✅ Sistema de callbacks para eventos
-✅ Gerenciamento de estados do AutoClicker
+✅ Controle de mouse no X11 usando `pynput`  
+✅ Controle de mouse no Wayland usando `ydotool`  
+✅ Detecção automática da sessão gráfica  
+✅ Motor de cliques independente da interface gráfica  
+✅ Sistema de callbacks para eventos  
+✅ Controle de estados do programa  
+✅ Configuração salva em JSON  
+✅ Execução em thread separada  
 
 ---
 
 # Arquitetura
 
-O projeto é dividido em camadas:
+O projeto foi dividido em módulos para facilitar manutenção e evolução.
 
-```text
+## Motor principal
+
+### `clicker.py`
+
+Responsável pela lógica do AutoClicker:
+
+- Controle do intervalo entre cliques
+- Quantidade de cliques
+- Execução em segundo plano
+- Sistema de eventos
+- Controle de iniciar/parar
+
+---
+
+## Controle do mouse
+
+### `mouse.py`
+
+Responsável pela comunicação com o sistema:
+
+- X11 → `pynput`
+- Wayland → `ydotool`
+
+O programa detecta automaticamente qual sessão gráfica está sendo usada.
+
+---
+
+## Estados do programa
+
+### `state.py`
+
+Controle dos estados do AutoClicker:
+
+```
+        IDLE
+          |
+       start()
+          |
+          v
+       RUNNING
+       /     \
+      /       \
+FINISHED     STOPPED
+```
+
+Estados disponíveis:
+
+- `IDLE` → aguardando iniciar
+- `RUNNING` → executando cliques
+- `FINISHED` → terminou a quantidade configurada
+- `STOPPED` → interrompido pelo usuário
+
+---
+
+## Configurações
+
+### `config.py`
+
+Responsável por:
+
+- Ler configurações
+- Salvar configurações
+- Gerenciar o arquivo `config.json`
+
+---
+
+# Estrutura do projeto
+
+```
 AutoClicker-Linux
 
-main.py
-   |
-   v
-gui.py              (interface gráfica futura)
-   |
-   v
-clicker.py          (motor de automação)
-   |
-   v
-mouse.py            (controle do mouse)
-   |
-   +----------------+
-   |                |
-  X11            Wayland
-pynput           ydotool
+├── app/
+│   ├── __init__.py
+│   ├── clicker.py
+│   ├── config.py
+│   ├── gui.py
+│   ├── main.py
+│   ├── mouse.py
+│   └── state.py
+│
+├── tests/
+│   ├── test_click.py
+│   ├── test_clicker.py
+│   ├── test_config.py
+│   ├── test_mouse.py
+│   ├── test_save_config.py
+│   ├── test_stop.py
+│   └── test_x11.py
+│
+├── config.json
+├── README.md
+└── requirements.txt
 ```
-
----
-
-# Sistema de Estados
-
-O AutoClicker utiliza estados para controlar o ciclo de execução:
-
-```text
-                 IDLE
-                  |
-              start()
-                  |
-                  v
-              RUNNING
-             /       \
-            /         \
-       quantidade      stop()
-        acabou          |
-          |             |
-          v             v
-      FINISHED       STOPPED
-```
-
-## Estados
-
-### IDLE
-
-Estado inicial.
-
-O AutoClicker foi criado, mas ainda não começou a executar.
-
----
-
-### RUNNING
-
-O programa está executando os cliques automaticamente.
-
----
-
-### FINISHED
-
-Ocorre quando o AutoClicker termina a execução normalmente.
-
-Exemplo:
-
-* Usuário define 100 cliques
-* O programa realiza todos os cliques
-* Estado muda para `FINISHED`
-
----
-
-### STOPPED
-
-Ocorre quando a execução é interrompida manualmente.
-
-Exemplo:
-
-* Usuário inicia o AutoClicker
-* Usuário utiliza o comando parar
-* Estado muda para `STOPPED`
 
 ---
 
 # Tecnologias
 
-* Python 3
-* Threading
-* pynput
-* ydotool
-* Git
-* GTK4 (planejado)
+- Python 3
+- pynput
+- ydotool
+- python-xlib
+- GTK4 (planejado)
 
 ---
 
@@ -128,53 +141,86 @@ Exemplo:
 
 Testado inicialmente em:
 
-* Pop!_OS 24.04 LTS
-* GNOME X11
-* COSMIC Wayland
+- Pop!_OS 24.04 LTS
+- GNOME X11
+- COSMIC Wayland
 
 ---
 
-# Estrutura atual
+# Instalação
 
-```text
-AutoClicker-Linux
+Clone o projeto:
 
-├── main.py
-├── gui.py
-├── clicker.py
-├── mouse.py
-├── state.py
-├── config.py
-├── teste_clicker.py
-└── teste_stop.py
+```bash
+git clone https://github.com/JotinhaGamer22/AutoClicker-Linux.git
+```
+
+Entre na pasta:
+
+```bash
+cd AutoClicker-Linux
+```
+
+Crie o ambiente virtual:
+
+```bash
+python3 -m venv venv
+```
+
+Ative:
+
+```bash
+source venv/bin/activate
+```
+
+Instale as dependências:
+
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+# Executando testes
+
+Exemplo:
+
+```bash
+python3 -m tests.test_clicker
+```
+
+Outros testes:
+
+```bash
+python3 -m tests.test_config
+
+python3 -m tests.test_stop
+
+python3 -m tests.test_mouse
 ```
 
 ---
 
 # Próximos passos
 
-* Sistema de configuração persistente (`config.json`)
-* Interface gráfica GTK4/Libadwaita
-* Botão iniciar/parar
-* Configuração de intervalo
-* Quantidade de cliques pela interface
-* Atalhos de teclado
-* Melhorias de acessibilidade
-* Pacote `.deb`
-* AppImage
-* Testes automatizados
+## Interface gráfica
+
+- Interface GTK4
+- Botões iniciar/parar
+- Configuração de intervalo
+- Seleção do botão do mouse
+
+## Melhorias futuras
+
+- Atalhos globais de teclado
+- Perfis de configuração
+- Ícone na bandeja do sistema
+- Pacote `.deb`
+- AppImage
+- Testes automatizados com pytest
 
 ---
 
-# Desenvolvimento
-
-O projeto utiliza branches para organização:
-
-* `main` → versões estáveis
-* `develop` → desenvolvimento e novos recursos
-
----
-
-## Licença
+# Licença
 
 Projeto em desenvolvimento.
