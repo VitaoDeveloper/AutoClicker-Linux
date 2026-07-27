@@ -22,7 +22,7 @@ Versão atual: **v0.6.0**
 ✅ Motor de cliques independente da interface gráfica  
 ✅ Sistema de callbacks para eventos  
 ✅ Controle de estados do programa  
-✅ Configuração salva em JSON  
+✅ Configuração salva em `~/.config/autoclicker/config.json` (XDG)  
 ✅ Execução em thread separada  
 ✅ Interface gráfica em GTK4  
 ✅ Tratamento de erros (mouse indisponível, ydotool ausente, config corrompida)  
@@ -96,7 +96,10 @@ Responsável por:
 
 - Ler configurações
 - Salvar configurações
-- Gerenciar o arquivo `config.json`
+- Gerenciar o arquivo de configuração
+- Migrar config de caminhos legados para o diretório XDG
+
+O arquivo de configuração é armazenado em `~/.config/autoclicker/config.json` (seguindo a XDG Base Directory Specification).
 
 ---
 
@@ -114,6 +117,19 @@ AutoClicker-Linux
 │   ├── mouse.py
 │   └── state.py
 │
+├── packaging/
+│   ├── autoclicker.desktop
+│   ├── postinst.sh
+│   ├── icons/
+│   │   └── autoclicker.png          (256x256, a ser adicionado)
+│   └── standalone/
+│       ├── autoclicker.desktop
+│       └── install.sh
+│
+├── scripts/
+│   ├── build-packages.sh            (.deb / .rpm via fpm)
+│   └── build-standalone.sh          (binário standalone + tar.gz)
+│
 ├── tests/
 │   ├── test_click.py
 │   ├── test_clicker.py
@@ -123,7 +139,6 @@ AutoClicker-Linux
 │   ├── test_stop.py
 │   └── test_x11.py
 │
-├── config.json
 ├── README.md
 └── requirements.txt
 ```
@@ -155,27 +170,69 @@ Testado em:
 
 # Instalação
 
-## 1. Clone o projeto
+O AutoClicker pode ser instalado de três formas: pacote `.deb`, pacote `.rpm` ou binário standalone.
+
+## Via pacote `.deb` (Debian / Ubuntu / Pop!_OS)
+
+Baixe o arquivo `.deb` da release e instale:
+
+```bash
+sudo dpkg -i autoclicker_*.deb
+sudo apt-get install -f   # resolve dependências, se necessário
+```
+
+## Via pacote `.rpm` (Fedora / RHEL / openSUSE)
+
+Baixe o arquivo `.rpm` da release e instale:
+
+```bash
+sudo rpm -i autoclicker-*.rpm
+```
+
+## Binário standalone (qualquer distro)
+
+Baixe o arquivo `autoclicker-linux-*-standalone.tar.gz` da release e extraia:
+
+```bash
+tar -xzf autoclicker-linux-*-standalone.tar.gz -C /tmp/
+cd /tmp/autoclicker
+chmod +x install.sh
+./install.sh
+```
+
+Ou, para instalar manualmente:
+
+```bash
+tar -xzf autoclicker-linux-*-standalone.tar.gz -C /opt/
+chmod +x /opt/autoclicker/autoclicker
+cp /opt/autoclicker/autoclicker.desktop ~/.local/share/applications/
+chmod +x ~/.local/share/applications/autoclicker.desktop
+update-desktop-database ~/.local/share/applications 2>/dev/null
+```
+
+## A partir do código-fonte (desenvolvimento)
+
+### 1. Clone o projeto
 
 ```bash
 git clone https://github.com/JotinhaGamer22/AutoClicker-Linux.git
 cd AutoClicker-Linux
 ```
 
-## 2. Crie e ative o ambiente virtual
+### 2. Crie e ative o ambiente virtual
 
 ```bash
-python3 -m venv venv
+python3 -m venv venv --system-site-packages
 source venv/bin/activate
 ```
 
-## 3. Instale as dependências Python (pip)
+### 3. Instale as dependências Python (pip)
 
 ```bash
 pip install -r requirements.txt
 ```
 
-## 4. Instale as dependências do sistema
+### 4. Instale as dependências do sistema
 
 O projeto depende de pacotes que **não são instaláveis via pip**: os bindings do GTK4 (interface gráfica) e o `ydotool` (controle de mouse no Wayland). Escolha seu gerenciador de pacotes:
 
@@ -219,7 +276,7 @@ sudo systemctl enable --now ydotool
 
 </details>
 
-## 5. Permissão de input (Wayland)
+### 5. Permissão de input (Wayland)
 
 Se você usa Wayland, o `evdev` precisa ler os dispositivos de entrada em `/dev/input`. Adicione seu usuário ao grupo `input`:
 
@@ -230,6 +287,14 @@ sudo usermod -aG input $USER
 Faça **logout/login** para a mudança ter efeito.
 
 > **Nota:** No X11 essa etapa não é necessária.
+
+---
+
+## Localização do arquivo de configuração
+
+As preferências são salvas em `~/.config/autoclicker/config.json`, seguindo a XDG Base Directory Specification.
+
+Se existir um `config.json` ao lado do executável (versão antiga), ele será migrado automaticamente para o novo local na primeira execução.
 
 ---
 
@@ -296,9 +361,7 @@ include-system-site-packages = true
 
 - Perfis de configuração
 - Ícone na bandeja do sistema
-- Pacote `.deb`
 - AppImage
-- Testes automatizados com pytest
 
 ---
 
