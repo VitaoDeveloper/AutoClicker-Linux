@@ -11,7 +11,7 @@ rm -rf "$BUILD_DIR"
 mkdir -p "$STAGE_DIR"
 
 cd "$REPO_DIR"
-python3 -m PyInstaller \
+.venv/bin/python -m PyInstaller \
     --onefile \
     --name autoclicker \
     --distpath "$STAGE_DIR" \
@@ -21,6 +21,7 @@ python3 -m PyInstaller \
 
 cp "$REPO_DIR/packaging/standalone/autoclicker.desktop" "$STAGE_DIR/"
 cp "$REPO_DIR/packaging/standalone/install.sh" "$STAGE_DIR/"
+cp "$REPO_DIR/packaging/standalone/README.txt" "$STAGE_DIR/"
 chmod +x "$STAGE_DIR/install.sh"
 
 if [ -f "$REPO_DIR/packaging/icons/autoclicker.png" ]; then
@@ -29,7 +30,7 @@ fi
 
 cd "$BUILD_DIR"
 tar -czf "$REPO_DIR/dist/autoclicker-linux-${VERSION}-standalone.tar.gz" \
-    -C "$BUILD_DIR" autoclicker
+    autoclicker
 
 echo "Arquivo standalone gerado:"
 ls -lh "$REPO_DIR/dist/autoclicker-linux-${VERSION}-standalone.tar.gz"
