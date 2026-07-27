@@ -11,3 +11,6 @@ venv/
 
 # Temporary files
 *.swp
+
+# Application files
+config.json
