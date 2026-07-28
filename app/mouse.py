@@ -5,6 +5,8 @@ import subprocess
 VALID_BUTTONS = {1, 2, 3}
 
 
+_x11_controller = None
+
 class MouseError(Exception):
     """Erro ao tentar executar um clique de mouse."""
 
@@ -16,6 +18,13 @@ def get_session():
         ""
     )
 
+
+def _get_x11_controller():
+    global _x11_controller
+    if _x11_controller is None:
+        from pynput.mouse import Controller
+        _x11_controller = Controller()
+    return _x11_controller
 
 def click(button=1):
 
@@ -65,7 +74,7 @@ def click(button=1):
         try:
             from pynput.mouse import Controller, Button
 
-            mouse = Controller()
+            mouse = _get_x11_controller()
 
             buttons = {
                 1: Button.left,
@@ -90,4 +99,38 @@ def click(button=1):
 
         raise MouseError(
             f"Sessão não suportada: {session or 'desconhecida'}"
+        )
+
+
+def click_burst(button=1, count=1, interval=0.1):
+    """Executa múltiplos cliques em uma única invocação do ydotool,
+    evitando spawnar um processo novo por clique (Wayland)."""
+
+    if button not in VALID_BUTTONS:
+        raise MouseError(
+            f"Botão inválido: {button}. Use 1 (esquerdo), 2 (meio) ou 3 (direito)."
+        )
+
+    base = {1: 0x00, 2: 0x02, 3: 0x01}[button]  # left, middle, right
+    click_code = 0xC0 | base  # 0xC0 = bits de "down" + "up"
+
+    # --next-delay é por evento (down/up); um clique completo = 2x next-delay
+    next_delay_ms = max(1, int((interval * 1000) / 2))
+
+    env = os.environ.copy()
+    env["YDOTOOL_SOCKET"] = "/tmp/.ydotool_socket"
+
+    try:
+        return subprocess.Popen(
+            [
+                "ydotool", "click",
+                "--repeat", str(count),
+                "--next-delay", str(next_delay_ms),
+                f"0x{click_code:02x}",
+            ],
+            env=env,
+        )
+    except FileNotFoundError:
+        raise MouseError(
+            "ydotool não encontrado. Instale o pacote 'ydotool' para usar o clicker no Wayland."
         )
