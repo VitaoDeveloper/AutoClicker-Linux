@@ -1,33 +1,28 @@
 from app.clicker import AutoClicker
-from app.config import load_config
 
-config = load_config()
+
+clicks = 0
+
 
 def status(valor):
-
+    global clicks
+    if isinstance(valor, int):
+        clicks = valor
     print("Evento:", valor)
 
 
-print("Iniciando AutoClicker")
-
-
 bot = AutoClicker(
-    interval=config["interval"],
-    button=config["button"],
-    amount=config["amount"],
+    interval=0.1,
+    amount=10,
     callback=status
 )
 
 
 print("Estado inicial:", bot.state)
 
-
 bot.start()
 
 bot.thread.join()
 
-
 print("Estado final:", bot.state)
-
-
-print("Finalizado")
+print(f"Total de cliques: {clicks}")

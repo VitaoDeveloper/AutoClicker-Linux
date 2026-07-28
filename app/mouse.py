@@ -114,8 +114,7 @@ def click_burst(button=1, count=1, interval=0.1):
     base = {1: 0x00, 2: 0x02, 3: 0x01}[button]  # left, middle, right
     click_code = 0xC0 | base  # 0xC0 = bits de "down" + "up"
 
-    # --next-delay é por evento (down/up); um clique completo = 2x next-delay
-    next_delay_ms = max(1, int((interval * 1000) / 2))
+    next_delay_ms = max(1, int(interval * 1000))
 
     env = os.environ.copy()
     env["YDOTOOL_SOCKET"] = "/tmp/.ydotool_socket"
@@ -129,6 +128,8 @@ def click_burst(button=1, count=1, interval=0.1):
                 f"0x{click_code:02x}",
             ],
             env=env,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
         )
     except FileNotFoundError:
         raise MouseError(
