@@ -60,58 +60,31 @@ class AutoClicker:
 
     def _run_wayland_burst(self):
 
-        # ydotool exige um N finito para --repeat; para o modo "clicar até
-        # parar" (amount == 0) usamos um valor bem alto e encerramos o
-        # processo manualmente quando stop() for chamado.
-        count = self.amount if self.amount > 0 else 10_000_000
+            count = self.amount if self.amount > 0 else 0  # 0 = ilimitado dentro do click_burst
 
-        try:
-            proc = click_burst(self.button, count, self.interval)
-        except MouseError as error:
-            self.error = str(error)
-            self.state = ClickerState.ERROR
-
-            if self.callback:
-                self.callback(f"error: {self.error}")
-            else:
-                print(f"Erro: {self.error}")
-
-            return
-
-        start = time.monotonic()
-
-        while self.running and proc.poll() is None:
-
-            time.sleep(0.05)
-
-            elapsed = time.monotonic() - start
-            estimated = (
-                int(elapsed / self.interval)
-                if self.interval > 0
-                else 0
-            )
-
-            if self.amount > 0:
-                estimated = min(estimated, self.amount)
-
-            if estimated > self.clicks:
-                self.clicks = estimated
-
+            def on_click(n):
+                self.clicks = n
                 if self.callback:
                     self.callback(self.clicks)
                 else:
                     print(f"Clique {self.clicks}")
 
-        if proc.poll() is None:
-            proc.terminate()
-        elif proc.returncode not in (0, None):
-            self.error = f"ydotool encerrou com código {proc.returncode}"
-            self.state = ClickerState.ERROR
+            try:
+                click_burst(
+                    self.button,
+                    count=count,
+                    interval=self.interval,
+                    running_flag=lambda: self.running,
+                    on_click=on_click,
+                )
+            except MouseError as error:
+                self.error = str(error)
+                self.state = ClickerState.ERROR
 
-            if self.callback:
-                self.callback(f"error: {self.error}")
-            else:
-                print(f"Erro: {self.error}")
+                if self.callback:
+                    self.callback(f"error: {self.error}")
+                else:
+                    print(f"Erro: {self.error}")
 
 
     def _run_single_clicks(self):
