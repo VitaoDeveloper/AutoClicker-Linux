@@ -60,14 +60,23 @@ class AutoClicker:
 
     def _run_wayland_burst(self):
 
-        start = time.monotonic()
+            count = self.amount if self.amount > 0 else 0  # 0 = ilimitado dentro do click_burst
 
-        while self.running:
-
-            count = self.amount if self.amount > 0 else 10_000_000
+            def on_click(n):
+                self.clicks = n
+                if self.callback:
+                    self.callback(self.clicks)
+                else:
+                    print(f"Clique {self.clicks}")
 
             try:
-                proc = click_burst(self.button, count, self.interval)
+                click_burst(
+                    self.button,
+                    count=count,
+                    interval=self.interval,
+                    running_flag=lambda: self.running,
+                    on_click=on_click,
+                )
             except MouseError as error:
                 self.error = str(error)
                 self.state = ClickerState.ERROR
@@ -76,48 +85,6 @@ class AutoClicker:
                     self.callback(f"error: {self.error}")
                 else:
                     print(f"Erro: {self.error}")
-
-                return
-
-            while self.running and proc.poll() is None:
-
-                time.sleep(0.05)
-
-                elapsed = time.monotonic() - start
-                estimated = (
-                    int(elapsed / self.interval)
-                    if self.interval > 0
-                    else 0
-                )
-
-                if self.amount > 0:
-                    estimated = min(estimated, self.amount)
-
-                if estimated > self.clicks:
-                    self.clicks = estimated
-
-                    if self.callback:
-                        self.callback(self.clicks)
-                    else:
-                        print(f"Clique {self.clicks}")
-
-            if not self.running:
-                if proc.poll() is None:
-                    proc.terminate()
-                return
-
-            if proc.returncode not in (0, None):
-                self.error = f"ydotool encerrou com código {proc.returncode}"
-                self.state = ClickerState.ERROR
-
-                if self.callback:
-                    self.callback(f"error: {self.error}")
-                else:
-                    print(f"Erro: {self.error}")
-                return
-
-            if self.amount > 0:
-                return
 
 
     def _run_single_clicks(self):
