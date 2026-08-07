@@ -1,12 +1,12 @@
-Auto Clicker para Linux com suporte a X11 e Wayland.
+# Auto Clicker para Linux
+
+Auto Clicker com suporte a **X11** e **Wayland**, interface GTK4 e atalho global de teclado.
 
 Projeto desenvolvido em Python com foco em compatibilidade com diferentes ambientes gráficos Linux.
 
 ---
 
 ## Status
-
-🚧 Em desenvolvimento
 
 Versão atual: **v0.7.0**
 
@@ -23,18 +23,21 @@ Versão atual: **v0.7.0**
   - Mismatch de caminho de socket entre cliente e daemon
   - `ydotoold` agora sobe **automaticamente**, detectando e limpando sockets órfãos
   - Mapa de botão do mouse corrigido: `ydotool` espera códigos hexadecimais de tecla-mouse (`0xC0`=esquerdo, `0xC1`=direito, `0xC2`=meio), não números decimais simples
-- Resultado: clique estável no Wayland, ~14 cliques/segundo pela interface gráfica (antes: travado em 0)
+- **Empacotamento:** scripts de build para `.deb`, `.rpm` e binário standalone (via PyInstaller)
+- **Resultado:** clique estável no Wayland, ~14 cliques/segundo pela interface gráfica (antes: travado em 0)
 
 ### v0.6.0 e anteriores
 
 - Base funcional com suporte X11/Wayland, interface GTK4, atalho global de teclado
 
+> Notas de release completas em [RELEASE_NOTES.md](RELEASE_NOTES.md).
+
 ---
 
-## Recursos atuais
+## Recursos
 
-✅ Controle de mouse no X11 usando `pynput`  
-✅ Controle de mouse no Wayland usando `ydotool` (binário vendorizado, com auto-start do daemon)  
+✅ Controle de mouse no **X11** usando `pynput`  
+✅ Controle de mouse no **Wayland** usando `ydotool` (binário vendorizado, com auto-start do daemon)  
 ✅ Detecção automática da sessão gráfica  
 ✅ Motor de cliques independente da interface gráfica  
 ✅ Sistema de callbacks para eventos  
@@ -43,46 +46,24 @@ Versão atual: **v0.7.0**
 ✅ Execução em thread separada  
 ✅ Interface gráfica em GTK4  
 ✅ Tratamento de erros (mouse indisponível, ydotool ausente, config corrompida)  
-✅ Atalho global de teclado para iniciar/parar (F1-F12, Pause, Scroll Lock)  
+✅ Atalho global de teclado para iniciar/parar (F1-F12, Pause, Scroll Lock)
 
 ---
 
-# Arquitetura
+## Arquitetura
 
-O projeto foi dividido em módulos para facilitar manutenção e evolução.
+O projeto é dividido em módulos para facilitar manutenção e evolução.
 
-## Motor principal
+| Módulo | Responsabilidade |
+|---|---|
+| `clicker.py` | Lógica do AutoClicker: intervalo entre cliques, quantidade, execução em segundo plano, eventos, iniciar/parar |
+| `mouse.py` | Comunicação com o sistema: `pynput` no X11, `ydotool` no Wayland (detecção automática da sessão via `XDG_SESSION_TYPE`) |
+| `state.py` | Estados do programa (IDLE, RUNNING, FINISHED, STOPPED, ERROR) |
+| `config.py` | Leitura/gravação da configuração em `~/.config/autoclicker/config.json` e migração de configs legados |
+| `gui.py` | Interface gráfica GTK4 |
+| `hotkeys.py` | Atalho global: `pynput` no X11, `evdev` no Wayland |
 
-### `clicker.py`
-
-Responsável pela lógica do AutoClicker:
-
-- Controle do intervalo entre cliques
-- Quantidade de cliques
-- Execução em segundo plano
-- Sistema de eventos
-- Controle de iniciar/parar
-
----
-
-## Controle do mouse
-
-### `mouse.py`
-
-Responsável pela comunicação com o sistema:
-
-- X11 → `pynput`
-- Wayland → `ydotool` (binário vendorizado em `vendor/ydotool/`, com daemon `ydotoold` iniciado automaticamente quando necessário)
-
-O programa detecta automaticamente qual sessão gráfica está sendo usada.
-
----
-
-## Estados do programa
-
-### `state.py`
-
-Controle dos estados do AutoClicker:
+### Estados do programa
 
 ```
         IDLE
@@ -96,40 +77,37 @@ Controle dos estados do AutoClicker:
 FINISHED     STOPPED
 ```
 
-Estados disponíveis:
-
 - `IDLE` → aguardando iniciar
 - `RUNNING` → executando cliques
 - `FINISHED` → terminou a quantidade configurada
 - `STOPPED` → interrompido pelo usuário
+- `ERROR` → falha durante a execução
+
+### Configuração
+
+Armazenada em `~/.config/autoclicker/config.json` (XDG Base Directory Specification).
+
+| Chave | Padrão | Descrição |
+|---|---|---|
+| `interval` | `0.1` | Intervalo entre cliques (segundos) |
+| `button` | `1` | Botão: 1 = esquerdo, 2 = meio, 3 = direito |
+| `amount` | `0` | Quantidade de cliques (0 = infinito) |
+| `hotkey` | `f6` | Atalho global iniciar/parar |
+
+Se existir um `config.json` ao lado do executável (versão antiga), ele é migrado automaticamente para o novo local na primeira execução.
 
 ---
 
-## Configurações
-
-### `config.py`
-
-Responsável por:
-
-- Ler configurações
-- Salvar configurações
-- Gerenciar o arquivo de configuração
-- Migrar config de caminhos legados para o diretório XDG
-
-O arquivo de configuração é armazenado em `~/.config/autoclicker/config.json` (seguindo a XDG Base Directory Specification).
-
----
-
-# Estrutura do projeto
+## Estrutura do projeto
 
 ```
-JCL-Clicker
-
+AutoClicker-Linux
 ├── app/
 │   ├── __init__.py
 │   ├── clicker.py
 │   ├── config.py
 │   ├── gui.py
+│   ├── hotkeys.py
 │   ├── main.py
 │   ├── mouse.py
 │   └── state.py
@@ -146,11 +124,12 @@ JCL-Clicker
 │   │   └── autoclicker.png          (256x256, a ser adicionado)
 │   └── standalone/
 │       ├── autoclicker.desktop
-│       └── install.sh
+│       ├── install.sh
+│       └── README.txt
 │
 ├── scripts/
 │   ├── build-packages.sh            (.deb / .rpm)
-│   └── build-standalone.sh          (binário standalone + tar.gz)
+│   └── build-standalone.sh          (binário standalone via PyInstaller + tar.gz)
 │
 ├── tests/
 │   ├── test_click.py
@@ -159,15 +138,18 @@ JCL-Clicker
 │   ├── test_mouse.py
 │   ├── test_save_config.py
 │   ├── test_stop.py
-│   └── test_x11.py
+│   ├── test_x11.py
+│   └── test_xdg_config.py
 │
+├── RELEASE_NOTES.md
 ├── README.md
+├── config.json                      (legado, migrado no primeiro uso)
 └── requirements.txt
 ```
 
 ---
 
-# Tecnologias
+## Tecnologias
 
 | Dependência | Tipo | Finalidade |
 |---|---|---|
@@ -177,11 +159,12 @@ JCL-Clicker
 | evdev | pip | Leitura de dispositivos de entrada no Wayland |
 | six | pip | Compatibilidade Python 2/3 |
 | GTK4 (PyGObject) | **sistema** | Interface gráfica |
+| PyInstaller | pip | Empacotamento do binário standalone |
 | ydotool | **vendorizado** (`vendor/ydotool/`) | Controle de mouse no Wayland |
 
 ---
 
-# Compatibilidade
+## Compatibilidade
 
 Testado em:
 
@@ -190,67 +173,65 @@ Testado em:
 
 ---
 
-# Instalação
+## Instalação
 
-O JCL Clicker pode ser instalado de três formas: pacote `.deb`, pacote `.rpm` ou binário standalone.
+O Auto Clicker pode ser instalado de três formas: pacote `.deb`, pacote `.rpm` ou binário standalone.
 
-## Via pacote `.deb` (Debian / Ubuntu / Pop!_OS)
-
-Baixe o arquivo `.deb` da release e instale:
+### Via pacote `.deb` (Debian / Ubuntu / Pop!_OS)
 
 ```bash
-sudo dpkg -i jcl-clicker_*.deb
+sudo dpkg -i autoclicker_*.deb
 sudo apt-get install -f   # resolve dependências, se necessário
 ```
 
-## Via pacote `.rpm` (Fedora / RHEL / openSUSE)
-
-Baixe o arquivo `.rpm` da release e instale:
+### Via pacote `.rpm` (Fedora / RHEL / openSUSE)
 
 ```bash
-sudo rpm -i jcl-clicker-*.rpm
+sudo rpm -i autoclicker-*.rpm
 ```
 
-## AppImage (qualquer distro)
+### AppImage
 
 > 🚧 Ainda não disponível — nos planos, ver [Próximos passos](#próximos-passos).
 
-## Binário standalone (qualquer distro)
+### Binário standalone (qualquer distro)
 
-Baixe o arquivo `jcl-clicker-linux-*-standalone.tar.gz` da release e extraia:
+Extraia o `autoclicker-linux-*-standalone.tar.gz` da release:
 
 ```bash
-tar -xzf jcl-clicker-linux-*-standalone.tar.gz -C /tmp/
-cd /tmp/jcl-clicker
+tar -xzf autoclicker-linux-*-standalone.tar.gz
+cd autoclicker
 chmod +x install.sh
 ./install.sh
 ```
 
-## A partir do código-fonte (desenvolvimento)
+O script instala em `~/.local/opt/autoclicker/` e registra o atalho no menu do sistema.
 
-### 1. Clone o projeto
+### A partir do código-fonte (desenvolvimento)
+
+#### 1. Clone o projeto
 
 ```bash
 git clone https://github.com/JotinhaGamer22/AutoClicker-Linux.git
 cd AutoClicker-Linux
 ```
 
-### 2. Crie e ative o ambiente virtual
+#### 2. Crie e ative o ambiente virtual
 
 ```bash
 python3 -m venv venv --system-site-packages
 source venv/bin/activate
 ```
 
-### 3. Instale as dependências Python (pip)
+#### 3. Instale as dependências Python (pip)
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 4. Instale as dependências do sistema
+#### 4. Instale as dependências do sistema
 
-O projeto depende de pacotes que **não são instaláveis via pip**: os bindings do GTK4 (interface gráfica). O `ydotool`/`ydotoold` já vêm vendorizados no repositório (`vendor/ydotool/`), não precisa instalar separadamente.
+Os bindings do GTK4 não são instaláveis via pip. O `ydotool`/`ydotoold` já vêm vendorizados no repositório (`vendor/ydotool/`), não é preciso instalá-los separadamente.
 
 <details>
 <summary><b>Ubuntu / Pop!_OS / Debian</b></summary>
@@ -288,9 +269,9 @@ sudo zypper install python3-gobject gtk4
 
 </details>
 
-### 5. Permissão de input (Wayland)
+#### 5. Permissão de input (Wayland)
 
-Se você usa Wayland, o `ydotoold` precisa acessar `/dev/uinput`. Crie a regra `udev` e adicione seu usuário ao grupo `input`:
+O `ydotoold` precisa acessar `/dev/uinput` no Wayland. Crie a regra `udev` e adicione seu usuário ao grupo `input`:
 
 ```bash
 echo 'KERNEL=="uinput", GROUP="input", MODE="0660"' | sudo tee /etc/udev/rules.d/80-uinput.rules
@@ -305,15 +286,7 @@ Faça **logout/login** (ou reinicie) para a mudança de grupo ter efeito.
 
 ---
 
-## Localização do arquivo de configuração
-
-As preferências são salvas em `~/.config/autoclicker/config.json`, seguindo a XDG Base Directory Specification.
-
-Se existir um `config.json` ao lado do executável (versão antiga), ele será migrado automaticamente para o novo local na primeira execução.
-
----
-
-# Executando a interface gráfica
+## Executando
 
 ```bash
 python3 -m app.main
@@ -321,33 +294,39 @@ python3 -m app.main
 
 ---
 
-# Executando testes
+## Atalho global de teclado
 
-Exemplo:
+O atalho funciona mesmo com a janela sem foco:
+
+- **X11** → via `pynput`
+- **Wayland** → leitura direta dos dispositivos em `/dev/input` via `evdev` (o Wayland não permite escuta global de teclado por questões de segurança)
+
+Veja a seção [5. Permissão de input (Wayland)](#5-permissão-de-input-wayland) para configurar os direitos de acesso.
+
+---
+
+## Executando testes
 
 ```bash
+python3 -m tests.test_click
 python3 -m tests.test_clicker
-```
-
-Outros testes:
-
-```bash
 python3 -m tests.test_config
-
-python3 -m tests.test_stop
-
 python3 -m tests.test_mouse
+python3 -m tests.test_save_config
+python3 -m tests.test_stop
+python3 -m tests.test_x11
+python3 -m tests.test_xdg_config
 ```
 
 ---
 
-# Troubleshooting
+## Troubleshooting
 
-## `ModuleNotFoundError: No module named 'gi'`
+### `ModuleNotFoundError: No module named 'gi'`
 
 O módulo `gi` (PyGObject) é um pacote do sistema, não é instalável via pip. Se o ambiente virtual não tem acesso aos pacotes do sistema, esse erro ocorre ao executar o programa.
 
-**Solução:** Recrie o venv com a flag `--system-site-packages`:
+**Solução:** recrie o venv com a flag `--system-site-packages`:
 
 ```bash
 rm -rf venv
@@ -356,19 +335,9 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-Ou, se o venv já existe, edite o arquivo `venv/pyvenv.cfg` e altere:
+Ou, se o venv já existe, edite `venv/pyvenv.cfg` e altere `include-system-site-packages = false` para `true`.
 
-```
-include-system-site-packages = false
-```
-
-para:
-
-```
-include-system-site-packages = true
-```
-
-## Clicker "roda" mas não clica em nada no Wayland
+### Clicker "roda" mas não clica em nada no Wayland
 
 Verifique se o socket do `ydotoold` está de fato aceitando conexões e não é um arquivo órfão:
 
@@ -381,39 +350,27 @@ O app sobe o daemon vendorizado automaticamente na primeira tentativa de clique.
 
 ---
 
-# Próximos passos
+## Próximos passos
 
-## Rebranding (em andamento)
+### Rebranding (em andamento)
 
 - [x] Escolher novo nome: **JCL Clicker** (J = Jônatas, C = Corinthians, L = Linux)
-- [ ] Atualizar `app_id` do GTK, `APP_NAME` do config, nome de pacote no `build-packages.sh`, `.desktop`, ícone
+- [ ] Atualizar `application_id` do GTK, `APP_NAME` do config, nome de pacote no `build-packages.sh`, `.desktop`, ícone
 - [ ] Renomear repositório no GitHub
 
-## Interface gráfica
+### Interface gráfica
 
 - [ ] Redesenho visual da GUI (estilo próprio, além do GTK4 padrão)
 - [ ] Ícone na bandeja do sistema
 
-## Empacotamento
+### Empacotamento
 
-- [ ] Gerar `.deb` (script já existe em `scripts/build-packages.sh`, precisa atualizar nome/versão)
-- [ ] Gerar `.rpm`
+- [ ] Gerar artefatos `.deb`/`.rpm` das releases (script existe em `scripts/build-packages.sh`)
 - [ ] AppImage
 
-## Funcionalidades
+### Funcionalidades
 
 - [ ] Perfis de configuração
-
----
-
-# Atalho global de teclado
-
-O atalho funciona mesmo com a janela sem foco:
-
-- **X11** → via `pynput`
-- **Wayland** → leitura direta dos dispositivos em `/dev/input` via `evdev` (o Wayland não permite escuta global de teclado por questões de segurança, então essa é a forma de contornar)
-
-Veja a seção [5. Permissão de input (Wayland)](#5-permissão-de-input-wayland) nas instruções de instalação para configurar os direitos de acesso.
 
 ---
 
