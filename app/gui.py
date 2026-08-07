@@ -194,6 +194,9 @@ class AutoClickerWindow(Gtk.ApplicationWindow):
     def _on_toggle_clicked(self, _button):
         if self.bot and self.bot.running:
             self.bot.stop()
+            self.toggle_button.set_label("Iniciar")
+            self.status_label.set_text(STATUS_TEXT[ClickerState.STOPPED])
+            self._set_inputs_sensitive(True)
             return
 
         self.error_label.set_visible(False)
