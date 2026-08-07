@@ -1,5 +1,3 @@
-# AutoClicker-Linux
-
 Auto Clicker para Linux com suporte a X11 e Wayland.
 
 Projeto desenvolvido em Python com foco em compatibilidade com diferentes ambientes gráficos Linux.
@@ -10,14 +8,33 @@ Projeto desenvolvido em Python com foco em compatibilidade com diferentes ambien
 
 🚧 Em desenvolvimento
 
-Versão atual: **v0.6.0**
+Versão atual: **v0.7.0**
+
+---
+
+## Changelog
+
+### v0.7.0
+
+- **Corrigido:** clicker no Wayland não funcionava de fato (vários bugs em cadeia)
+  - `--repeat`/`--next-delay` não existiam na versão de `ydotool` disponível
+  - Erro real estava sendo engolido por `stderr=DEVNULL`
+  - Binário `ydotool` do snap tinha overhead alto por chamada — agora **vendorizado** (compilado do source) em `vendor/ydotool/`
+  - Mismatch de caminho de socket entre cliente e daemon
+  - `ydotoold` agora sobe **automaticamente**, detectando e limpando sockets órfãos
+  - Mapa de botão do mouse corrigido: `ydotool` espera códigos hexadecimais de tecla-mouse (`0xC0`=esquerdo, `0xC1`=direito, `0xC2`=meio), não números decimais simples
+- Resultado: clique estável no Wayland, ~14 cliques/segundo pela interface gráfica (antes: travado em 0)
+
+### v0.6.0 e anteriores
+
+- Base funcional com suporte X11/Wayland, interface GTK4, atalho global de teclado
 
 ---
 
 ## Recursos atuais
 
 ✅ Controle de mouse no X11 usando `pynput`  
-✅ Controle de mouse no Wayland usando `ydotool`  
+✅ Controle de mouse no Wayland usando `ydotool` (binário vendorizado, com auto-start do daemon)  
 ✅ Detecção automática da sessão gráfica  
 ✅ Motor de cliques independente da interface gráfica  
 ✅ Sistema de callbacks para eventos  
@@ -55,7 +72,7 @@ Responsável pela lógica do AutoClicker:
 Responsável pela comunicação com o sistema:
 
 - X11 → `pynput`
-- Wayland → `ydotool`
+- Wayland → `ydotool` (binário vendorizado em `vendor/ydotool/`, com daemon `ydotoold` iniciado automaticamente quando necessário)
 
 O programa detecta automaticamente qual sessão gráfica está sendo usada.
 
@@ -106,7 +123,7 @@ O arquivo de configuração é armazenado em `~/.config/autoclicker/config.json`
 # Estrutura do projeto
 
 ```
-AutoClicker-Linux
+JCL-Clicker
 
 ├── app/
 │   ├── __init__.py
@@ -116,6 +133,11 @@ AutoClicker-Linux
 │   ├── main.py
 │   ├── mouse.py
 │   └── state.py
+│
+├── vendor/
+│   └── ydotool/
+│       ├── ydotool                  (cliente, compilado do source)
+│       └── ydotoold                 (daemon, compilado do source)
 │
 ├── packaging/
 │   ├── autoclicker.desktop
@@ -127,7 +149,7 @@ AutoClicker-Linux
 │       └── install.sh
 │
 ├── scripts/
-│   ├── build-packages.sh            (.deb / .rpm via fpm)
+│   ├── build-packages.sh            (.deb / .rpm)
 │   └── build-standalone.sh          (binário standalone + tar.gz)
 │
 ├── tests/
@@ -155,7 +177,7 @@ AutoClicker-Linux
 | evdev | pip | Leitura de dispositivos de entrada no Wayland |
 | six | pip | Compatibilidade Python 2/3 |
 | GTK4 (PyGObject) | **sistema** | Interface gráfica |
-| ydotool | **sistema** | Controle de mouse no Wayland |
+| ydotool | **vendorizado** (`vendor/ydotool/`) | Controle de mouse no Wayland |
 
 ---
 
@@ -170,14 +192,14 @@ Testado em:
 
 # Instalação
 
-O AutoClicker pode ser instalado de três formas: pacote `.deb`, pacote `.rpm` ou binário standalone.
+O JCL Clicker pode ser instalado de três formas: pacote `.deb`, pacote `.rpm` ou binário standalone.
 
 ## Via pacote `.deb` (Debian / Ubuntu / Pop!_OS)
 
 Baixe o arquivo `.deb` da release e instale:
 
 ```bash
-sudo dpkg -i autoclicker_*.deb
+sudo dpkg -i jcl-clicker_*.deb
 sudo apt-get install -f   # resolve dependências, se necessário
 ```
 
@@ -186,28 +208,22 @@ sudo apt-get install -f   # resolve dependências, se necessário
 Baixe o arquivo `.rpm` da release e instale:
 
 ```bash
-sudo rpm -i autoclicker-*.rpm
+sudo rpm -i jcl-clicker-*.rpm
 ```
+
+## AppImage (qualquer distro)
+
+> 🚧 Ainda não disponível — nos planos, ver [Próximos passos](#próximos-passos).
 
 ## Binário standalone (qualquer distro)
 
-Baixe o arquivo `autoclicker-linux-*-standalone.tar.gz` da release e extraia:
+Baixe o arquivo `jcl-clicker-linux-*-standalone.tar.gz` da release e extraia:
 
 ```bash
-tar -xzf autoclicker-linux-*-standalone.tar.gz -C /tmp/
-cd /tmp/autoclicker
+tar -xzf jcl-clicker-linux-*-standalone.tar.gz -C /tmp/
+cd /tmp/jcl-clicker
 chmod +x install.sh
 ./install.sh
-```
-
-Ou, para instalar manualmente:
-
-```bash
-tar -xzf autoclicker-linux-*-standalone.tar.gz -C /opt/
-chmod +x /opt/autoclicker/autoclicker
-cp /opt/autoclicker/autoclicker.desktop ~/.local/share/applications/
-chmod +x ~/.local/share/applications/autoclicker.desktop
-update-desktop-database ~/.local/share/applications 2>/dev/null
 ```
 
 ## A partir do código-fonte (desenvolvimento)
@@ -234,14 +250,13 @@ pip install -r requirements.txt
 
 ### 4. Instale as dependências do sistema
 
-O projeto depende de pacotes que **não são instaláveis via pip**: os bindings do GTK4 (interface gráfica) e o `ydotool` (controle de mouse no Wayland). Escolha seu gerenciador de pacotes:
+O projeto depende de pacotes que **não são instaláveis via pip**: os bindings do GTK4 (interface gráfica). O `ydotool`/`ydotoold` já vêm vendorizados no repositório (`vendor/ydotool/`), não precisa instalar separadamente.
 
 <details>
 <summary><b>Ubuntu / Pop!_OS / Debian</b></summary>
 
 ```bash
-sudo apt install python3-gi gir1.2-gtk-4.0 ydotool
-sudo systemctl enable --now ydotool
+sudo apt install python3-gi gir1.2-gtk-4.0
 ```
 
 </details>
@@ -250,8 +265,7 @@ sudo systemctl enable --now ydotool
 <summary><b>Fedora</b></summary>
 
 ```bash
-sudo dnf install python3-gobject gtk4 ydotool
-sudo systemctl enable --now ydotool
+sudo dnf install python3-gobject gtk4
 ```
 
 </details>
@@ -260,8 +274,7 @@ sudo systemctl enable --now ydotool
 <summary><b>Arch Linux / Manjaro</b></summary>
 
 ```bash
-sudo pacman -S python-gobject gtk4 ydotool
-sudo systemctl enable --now ydotool
+sudo pacman -S python-gobject gtk4
 ```
 
 </details>
@@ -270,21 +283,23 @@ sudo systemctl enable --now ydotool
 <summary><b>openSUSE</b></summary>
 
 ```bash
-sudo zypper install python3-gobject gtk4 ydotool
-sudo systemctl enable --now ydotool
+sudo zypper install python3-gobject gtk4
 ```
 
 </details>
 
 ### 5. Permissão de input (Wayland)
 
-Se você usa Wayland, o `evdev` precisa ler os dispositivos de entrada em `/dev/input`. Adicione seu usuário ao grupo `input`:
+Se você usa Wayland, o `ydotoold` precisa acessar `/dev/uinput`. Crie a regra `udev` e adicione seu usuário ao grupo `input`:
 
 ```bash
+echo 'KERNEL=="uinput", GROUP="input", MODE="0660"' | sudo tee /etc/udev/rules.d/80-uinput.rules
+sudo udevadm control --reload-rules
+sudo udevadm trigger
 sudo usermod -aG input $USER
 ```
 
-Faça **logout/login** para a mudança ter efeito.
+Faça **logout/login** (ou reinicie) para a mudança de grupo ter efeito.
 
 > **Nota:** No X11 essa etapa não é necessária.
 
@@ -353,15 +368,41 @@ para:
 include-system-site-packages = true
 ```
 
+## Clicker "roda" mas não clica em nada no Wayland
+
+Verifique se o socket do `ydotoold` está de fato aceitando conexões e não é um arquivo órfão:
+
+```bash
+rm -f /tmp/.ydotool_socket
+python3 -m app.main
+```
+
+O app sobe o daemon vendorizado automaticamente na primeira tentativa de clique.
+
 ---
 
 # Próximos passos
 
-## Melhorias futuras
+## Rebranding (em andamento)
 
-- Perfis de configuração
-- Ícone na bandeja do sistema
-- AppImage
+- [x] Escolher novo nome: **JCL Clicker** (J = Jônatas, C = Corinthians, L = Linux)
+- [ ] Atualizar `app_id` do GTK, `APP_NAME` do config, nome de pacote no `build-packages.sh`, `.desktop`, ícone
+- [ ] Renomear repositório no GitHub
+
+## Interface gráfica
+
+- [ ] Redesenho visual da GUI (estilo próprio, além do GTK4 padrão)
+- [ ] Ícone na bandeja do sistema
+
+## Empacotamento
+
+- [ ] Gerar `.deb` (script já existe em `scripts/build-packages.sh`, precisa atualizar nome/versão)
+- [ ] Gerar `.rpm`
+- [ ] AppImage
+
+## Funcionalidades
+
+- [ ] Perfis de configuração
 
 ---
 
