@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=AutoClicker
+Comment=Automação de cliques de mouse para Linux
+Exec=autoclicker
+Icon=autoclicker
+Terminal=false
+Categories=Utility;

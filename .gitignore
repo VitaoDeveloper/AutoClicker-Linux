@@ -5,9 +5,14 @@ __pycache__/
 
 # Virtual environment
 venv/
+.venv/
 
 # VS Code
 .vscode/
 
 # Temporary files
 *.swp
+
+# Application files
+config.json
+dist/
